@@ -470,12 +470,12 @@ Function *PrototypeAST::codegen() {
       FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
 
   Function *F =
-      Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+      Function::Create(FT, Function::ExternalLinkage, Name.c_str(), TheModule.get());
 
   // Set names for all arguments.
   unsigned Idx = 0;
   for (auto &Arg : F->args())
-    Arg.setName(Args[Idx++]);
+    Arg.setName(Args[Idx++].c_str());
 
   return F;
 }
@@ -496,9 +496,9 @@ Function *FunctionAST::codegen() {
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
-  for (auto &Arg : TheFunction->args())
-    NamedValues[std::string(Arg.getName())] = &Arg;
-
+  for (auto &Arg : TheFunction->args()) {
+    NamedValues[Arg.getName().str()] = &Arg;
+  }
   if (Value *RetVal = Body->codegen()) {
     // Finish off the function.
     Builder->CreateRet(RetVal);
