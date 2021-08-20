@@ -476,27 +476,29 @@ Function *PrototypeAST::codegen() {
             FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
 
     Function *F =
-            Function::Create(FT, Function::ExternalLinkage, Name.c_str(), TheModule.get());
+            Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
 
     // Set names for all arguments.
     for (unsigned Idx = 0; auto &Arg : F->args())
-        Arg.setName(Args[Idx++].c_str());
+        Arg.setName(Args[Idx++]);
 
     return F;
 }
 
 Function *FunctionAST::codegen() {
     // First, check for an existing function from a previous 'extern' declaration.
-    Function *TheFunction = TheModule->getFunction(Proto->getName().c_str());
+    Function *TheFunction = TheModule->getFunction(Proto->getName());
 
     if (!TheFunction) {
         TheFunction = Proto->codegen();
     } else {
+        if (!TheFunction->empty())
+            return (Function*)LogErrorV("Function cannot be redefined.");
         auto& extern_arguments = Proto->Args;
         if(TheFunction->arg_size() != extern_arguments.size()) return (Function*)LogErrorV("Incorrect # of arguments");
         for(unsigned Idx = 0; auto& Arg: TheFunction->args()) {
-            if(Arg.getName().str() != extern_arguments[Idx]) {
-                return (Function*)LogErrorV("Unknown variable name");
+            if(Arg.getName().str() != extern_arguments[Idx++]) {
+                return (Function*)LogErrorV("Unknown variable name in function definition");
             }
         }
     }
